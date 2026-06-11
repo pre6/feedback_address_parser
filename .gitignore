@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables — never commit these
+.env
+
+# spaCy models (stored in Docker volume, not git)
+models/
+
+# Training data — raw source files are sensitive/large
+training-data/raw/
+
+# Keep corpus and corrections tracked (they're your source of truth)
+# but ignore any temp files inside
+training-data/corpus/*.lock
+training-data/corrections/*.lock
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
