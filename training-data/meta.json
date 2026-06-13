@@ -1,0 +1,9 @@
+{
+  "entity_labels": ["STREET", "CITY", "STATE", "POSTAL_CODE", "COUNTRY", "UNIT"],
+  "spacy_version": "3.7.2",
+  "last_merged": "",
+  "train_count": 0,
+  "dev_count": 0,
+  "test_count": 0,
+  "correction_batches": []
+}
