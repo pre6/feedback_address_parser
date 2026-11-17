@@ -1,0 +1,26 @@
+{
+  "current": "v1/model-best",
+  "history": [
+    {
+      "timestamp": "2026-11-17T05:44:16.341178+00:00",
+      "candidate": "v1/model-best",
+      "previous": null,
+      "decision": "promoted",
+      "reasons": [
+        "no current model"
+      ],
+      "candidate_scores": {
+        "f": 0.9657,
+        "p": 0.9675,
+        "r": 0.9639,
+        "per_label": {
+          "ADDRESS": 0.9472,
+          "CITY": 0.9682,
+          "ZIP": 0.9924
+        },
+        "n_docs": 75444
+      },
+      "current_scores": null
+    }
+  ]
+}

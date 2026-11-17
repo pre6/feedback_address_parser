@@ -1,0 +1,30 @@
+{
+  "model": "models/v1/model-best",
+  "data": "data/base/dev.spacy",
+  "n_docs": 75444,
+  "overall": {
+    "ents_p": 0.9676,
+    "ents_r": 0.9633,
+    "ents_f": 0.9654
+  },
+  "per_label": {
+    "ADDRESS": {
+      "p": 0.9532,
+      "r": 0.9416,
+      "f": 0.9474,
+      "exact_match": 0.9349
+    },
+    "CITY": {
+      "p": 0.9699,
+      "r": 0.965,
+      "f": 0.9674,
+      "exact_match": 0.9547
+    },
+    "ZIP": {
+      "p": 0.9875,
+      "r": 0.9975,
+      "f": 0.9925,
+      "exact_match": 0.9915
+    }
+  }
+}
