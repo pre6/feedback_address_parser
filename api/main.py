@@ -4,10 +4,12 @@ Run locally (from repo root):
     MODEL_PATH=models/v1/model-best CORRECTIONS_DIR=data/corrections \
         uvicorn api.main:app --reload
 
-In Docker, mount ./models at /models and ./data at /data, and point
-MODEL_PATH at /models/current (a symlink or copy of the promoted model).
+By default the API serves whatever models/registry.json says is "current"
+(the same rule api/batch_parse.py uses). Set MODEL_PATH to override. After a
+new model is promoted, call POST /reload (retrain.py does this for you).
 """
 import csv
+import json
 import os
 import sys
 import threading
@@ -20,10 +22,13 @@ from pydantic import BaseModel
 from api.review import router as review_router
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from shared.db import database_url, ensure_schema  # noqa: E402
 from shared.text import normalize_text  # noqa: E402  (same normalization as training)
 
-MODEL_PATH = os.getenv("MODEL_PATH", "/models/current")
-CORRECTIONS_DIR = Path(os.getenv("CORRECTIONS_DIR", "/data/corrections"))
+ROOT = Path(__file__).resolve().parents[1]
+MODEL_PATH = os.getenv("MODEL_PATH", "")  # optional explicit override
+MODELS_DIR = Path(os.getenv("MODELS_DIR", ROOT / "models"))
+CORRECTIONS_DIR = Path(os.getenv("CORRECTIONS_DIR", ROOT / "data" / "corrections"))
 CORRECTIONS_FILE = CORRECTIONS_DIR / "corrections.csv"
 COLUMNS = ["LOCATION", "ADDRESS", "CITY", "ZIP", "model_version", "timestamp"]
 
@@ -40,11 +45,51 @@ def _version_from_path(path: str) -> str:
     return resolved.parent.name if resolved.name == "model-best" else resolved.name
 
 
-@app.on_event("startup")
-def load_model():
+def _resolve_model():
+    """MODEL_PATH wins; otherwise follow models/registry.json ("current")."""
+    if MODEL_PATH:
+        return Path(MODEL_PATH), _version_from_path(MODEL_PATH)
+    reg = MODELS_DIR / "registry.json"
+    if not reg.exists():
+        raise RuntimeError(f"No MODEL_PATH set and {reg} not found. Run trainer/promote.py or set MODEL_PATH.")
+    rel = json.loads(reg.read_text())["current"]
+    return MODELS_DIR / rel, rel.split("/")[0]
+
+
+def _load():
     global nlp, model_version
-    nlp = spacy.load(MODEL_PATH)
-    model_version = _version_from_path(MODEL_PATH)
+    path, version = _resolve_model()
+    new = spacy.load(path)  # load first, so a failed load keeps the old model serving
+    nlp, model_version = new, version
+
+
+def _init_db():
+    """Create the address_parsed table if a database is configured."""
+    if not os.getenv("DATABASE_URL"):
+        return
+    try:
+        import psycopg
+
+        with psycopg.connect(database_url()) as conn:
+            ensure_schema(conn)
+    except Exception as e:  # the parse endpoints still work without a DB
+        print(f"WARNING: could not prepare the database schema: {e}")
+
+
+@app.on_event("startup")
+def startup():
+    _load()
+    _init_db()
+
+
+@app.post("/reload")
+def reload_model():
+    old = model_version
+    try:
+        _load()
+    except Exception as e:
+        raise HTTPException(500, f"Reload failed, still serving {old}: {e}")
+    return {"previous": old, "model_version": model_version}
 
 
 class ParseRequest(BaseModel):
@@ -78,6 +123,8 @@ def health():
 
 @app.post("/parse", response_model=ParseResponse)
 def parse(req: ParseRequest):
+    if nlp is None:
+        raise HTTPException(503, "model not loaded yet")
     text = normalize_text(req.text)
     if not text:
         raise HTTPException(400, "text is empty")
