@@ -1,0 +1,19 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# big, regenerable data and models
+data/raw/
+data/base/
+models/*/
+models/_*.spacy
+
+# KEEP these tracked: the frozen test set and the model registry.
+# If data/test/test.spacy is missing, build_dataset.py would create a NEW test set
+# and old/new model scores would no longer be comparable.
+#   data/test/        (test.spacy, test_hashes.txt, test_manifest.json)
+#   models/registry.json
