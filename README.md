@@ -184,3 +184,5 @@ A model trained on a tiny subset will normally be **rejected**. That confirms th
 | Build fails with "missing columns" | The corrections CSV headers don't match `LOCATION, ADDRESS, CITY, ZIP`. |
 | Corrections not affecting the model | Check `data/base/rejected.csv` for your rows, and see the dedupe limitation above. |
 | Build seems frozen | It prints nothing until it finishes. Check that `python.exe` memory is still growing. |
+
+### Transparency - AI was used in the production of this repo
